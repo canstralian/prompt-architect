@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Header } from "@/components/Header";
+import { Header, ViewType } from "@/components/Header";
 import { TemplateView } from "@/components/TemplateView";
 import { BuilderView } from "@/components/BuilderView";
+import { LibraryView } from "@/components/LibraryView";
 import { useTheme } from "@/hooks/useTheme";
 import { useDraft } from "@/hooks/useDraft";
+import { toast } from "sonner";
 
 const Index = () => {
   const { theme, toggleTheme } = useTheme();
-  const [view, setView] = useState<"template" | "builder">("builder");
+  const [view, setView] = useState<ViewType>("builder");
   
   const {
     drafts,
@@ -21,6 +23,17 @@ const Index = () => {
     renameDraft,
   } = useDraft();
 
+  const handleUseLibraryTemplate = (sections: Record<string, string>, name: string) => {
+    // Create a new draft with the template sections
+    newDraft();
+    Object.entries(sections).forEach(([key, value]) => {
+      updateSection(key, value);
+    });
+    updateName(`${name} (Copy)`);
+    setView("builder");
+    toast.success(`Template "${name}" loaded into builder`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -31,9 +44,8 @@ const Index = () => {
       />
 
       <main>
-        {view === "template" ? (
-          <TemplateView />
-        ) : (
+        {view === "template" && <TemplateView />}
+        {view === "builder" && (
           <BuilderView
             draft={currentDraft}
             drafts={drafts}
@@ -45,6 +57,9 @@ const Index = () => {
             onDeleteDraft={deleteDraft}
             onRenameDraft={renameDraft}
           />
+        )}
+        {view === "library" && (
+          <LibraryView onUseTemplate={handleUseLibraryTemplate} />
         )}
       </main>
     </div>
