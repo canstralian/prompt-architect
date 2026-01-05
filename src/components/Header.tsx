@@ -1,11 +1,13 @@
-import { Moon, Sun, FileText, Layers } from "lucide-react";
+import { Moon, Sun, FileText, Layers, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export type ViewType = "template" | "builder" | "library";
 
 interface HeaderProps {
   theme: "light" | "dark";
   onToggleTheme: () => void;
-  view: "template" | "builder";
-  onViewChange: (view: "template" | "builder") => void;
+  view: ViewType;
+  onViewChange: (view: ViewType) => void;
 }
 
 export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps) {
@@ -43,6 +45,15 @@ export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps
             >
               <Layers className="w-4 h-4" />
               <span className="hidden sm:inline">Builder</span>
+            </Button>
+            <Button
+              variant={view === "library" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => onViewChange("library")}
+              className="gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Library</span>
             </Button>
           </div>
 
