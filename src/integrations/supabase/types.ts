@@ -14,7 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      prompt_templates: {
+        Row: {
+          author: string
+          category: Database["public"]["Enums"]["template_category"]
+          created_at: string
+          description: string
+          id: string
+          is_curated: boolean
+          likes_count: number
+          name: string
+          saves_count: number
+          sections: Json
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          category?: Database["public"]["Enums"]["template_category"]
+          created_at?: string
+          description: string
+          id?: string
+          is_curated?: boolean
+          likes_count?: number
+          name: string
+          saves_count?: number
+          sections: Json
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          category?: Database["public"]["Enums"]["template_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          is_curated?: boolean
+          likes_count?: number
+          name?: string
+          saves_count?: number
+          sections?: Json
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_saved_templates: {
+        Row: {
+          id: string
+          saved_at: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          saved_at?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          saved_at?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +96,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      template_category:
+        | "coding"
+        | "research"
+        | "writing"
+        | "automation"
+        | "analysis"
+        | "planning"
+        | "creative"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +231,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      template_category: [
+        "coding",
+        "research",
+        "writing",
+        "automation",
+        "analysis",
+        "planning",
+        "creative",
+        "other",
+      ],
+    },
   },
 } as const
