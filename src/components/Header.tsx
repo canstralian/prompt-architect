@@ -1,5 +1,16 @@
-import { Moon, Sun, FileText, Layers, BookOpen } from "lucide-react";
+import { Moon, Sun, FileText, Layers, BookOpen, User, LogOut, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export type ViewType = "template" | "builder" | "library";
 
@@ -11,6 +22,21 @@ interface HeaderProps {
 }
 
 export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps) {
+  const navigate = useNavigate();
+  const { user, loading, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Failed to sign out');
+    } else {
+      toast.success('Signed out successfully');
+    }
+  };
+
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
     <header className="sticky top-0 z-50 glass-panel border-b px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -70,6 +96,38 @@ export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps
               <Moon className="w-4 h-4" />
             )}
           </Button>
+
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          ) : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{displayName}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+              <User className="w-4 h-4 mr-2" />
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
     </header>

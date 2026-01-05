@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { Search, Filter, Loader2, BookOpen, Sparkles } from "lucide-react";
+import { Search, Loader2, BookOpen, Sparkles, Bookmark } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TemplateCard } from "@/components/TemplateCard";
-import { useTemplateLibrary, PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
+import { CreateTemplateDialog } from "@/components/CreateTemplateDialog";
+import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
+import { useSavedTemplates } from "@/hooks/useSavedTemplates";
+import { useAuth } from "@/hooks/useAuth";
 import { SECTIONS } from "@/lib/sectionData";
 
 interface LibraryViewProps {
@@ -14,6 +18,7 @@ interface LibraryViewProps {
 }
 
 export function LibraryView({ onUseTemplate }: LibraryViewProps) {
+  const { user } = useAuth();
   const {
     templates,
     loading,
@@ -23,30 +28,64 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
     selectedCategory,
     setSelectedCategory,
     categories,
+    refetch: refetchTemplates,
   } = useTemplateLibrary();
 
+  const {
+    isTemplateSaved,
+    saveTemplate,
+    unsaveTemplate,
+  } = useSavedTemplates();
+
   const [previewTemplate, setPreviewTemplate] = useState<PromptTemplate | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "saved">("all");
 
   function handleUseTemplate(template: PromptTemplate) {
     onUseTemplate(template.sections, template.name);
   }
 
+  function handleToggleSave(templateId: string, isSaved: boolean) {
+    if (isSaved) {
+      unsaveTemplate(templateId);
+    } else {
+      saveTemplate(templateId);
+    }
+  }
+
+  const displayedTemplates = activeTab === "saved" 
+    ? templates.filter(t => isTemplateSaved(t.id))
+    : templates;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-start justify-between mb-8">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h2 className="text-2xl font-bold">Template Library</h2>
             <p className="text-sm text-muted-foreground">
-              Browse and use curated prompt templates
+              Browse, save, and share prompt templates
             </p>
           </div>
         </div>
+        <CreateTemplateDialog onCreated={refetchTemplates} />
       </div>
+
+      {/* Tabs for All / Saved */}
+      {user && (
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "saved")} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="all">All Templates</TabsTrigger>
+            <TabsTrigger value="saved" className="gap-2">
+              <Bookmark className="w-4 h-4" />
+              Saved
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -103,20 +142,24 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
       )}
 
       {/* Empty State */}
-      {!loading && !error && templates.length === 0 && (
+      {!loading && !error && displayedTemplates.length === 0 && (
         <div className="text-center py-16 glass-panel rounded-xl">
           <Sparkles className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No templates found</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {activeTab === "saved" ? "No saved templates" : "No templates found"}
+          </h3>
           <p className="text-muted-foreground">
-            Try adjusting your search or filter criteria
+            {activeTab === "saved" 
+              ? "Save templates to access them quickly later" 
+              : "Try adjusting your search or filter criteria"}
           </p>
         </div>
       )}
 
       {/* Template Grid */}
-      {!loading && !error && templates.length > 0 && (
+      {!loading && !error && displayedTemplates.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((template) => (
+          {displayedTemplates.map((template) => (
             <div 
               key={template.id} 
               onClick={() => setPreviewTemplate(template)}
@@ -125,6 +168,8 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
               <TemplateCard
                 template={template}
                 onUseTemplate={handleUseTemplate}
+                isSaved={isTemplateSaved(template.id)}
+                onToggleSave={user ? handleToggleSave : undefined}
               />
             </div>
           ))}

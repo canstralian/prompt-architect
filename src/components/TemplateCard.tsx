@@ -1,12 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette } from "lucide-react";
+import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck } from "lucide-react";
 import { PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
 
 interface TemplateCardProps {
   template: PromptTemplate;
   onUseTemplate: (template: PromptTemplate) => void;
+  isSaved?: boolean;
+  onToggleSave?: (templateId: string, isSaved: boolean) => void;
 }
 
 const categoryIcons: Record<TemplateCategory, React.ElementType> = {
@@ -31,9 +33,14 @@ const categoryColors: Record<TemplateCategory, string> = {
   other: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
-export function TemplateCard({ template, onUseTemplate }: TemplateCardProps) {
+export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave }: TemplateCardProps) {
   const Icon = categoryIcons[template.category];
   const colorClass = categoryColors[template.category];
+
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleSave?.(template.id, isSaved ?? false);
+  };
 
   return (
     <Card className="group glass-panel border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
@@ -50,9 +57,25 @@ export function TemplateCard({ template, onUseTemplate }: TemplateCardProps) {
               </Badge>
             )}
           </div>
-          <Badge variant="outline" className={`text-xs capitalize ${colorClass}`}>
-            {template.category}
-          </Badge>
+          <div className="flex items-center gap-1">
+            {onToggleSave && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleSaveClick}
+              >
+                {isSaved ? (
+                  <BookmarkCheck className="w-4 h-4 text-primary" />
+                ) : (
+                  <Bookmark className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+            <Badge variant="outline" className={`text-xs capitalize ${colorClass}`}>
+              {template.category}
+            </Badge>
+          </div>
         </div>
         <CardTitle className="text-lg mt-3 group-hover:text-primary transition-colors">
           {template.name}
@@ -87,7 +110,10 @@ export function TemplateCard({ template, onUseTemplate }: TemplateCardProps) {
           </div>
           <Button
             size="sm"
-            onClick={() => onUseTemplate(template)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUseTemplate(template);
+            }}
             className="opacity-0 group-hover:opacity-100 transition-opacity"
           >
             Use Template
