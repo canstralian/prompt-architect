@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Moon, Sun, FileText, Layers, BookOpen, User, LogOut, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type ViewType = "template" | "builder" | "library";
@@ -24,6 +26,27 @@ interface HeaderProps {
 export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps) {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchAvatarUrl();
+    } else {
+      setAvatarUrl(null);
+    }
+  }, [user]);
+
+  async function fetchAvatarUrl() {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (data?.avatar_url) {
+      setAvatarUrl(data.avatar_url);
+    }
+  }
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -104,6 +127,7 @@ export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
+                    <AvatarImage src={avatarUrl || undefined} alt="Profile" />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
                       {initials}
                     </AvatarFallback>
