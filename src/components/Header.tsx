@@ -116,6 +116,10 @@ export function Header({ theme, onToggleTheme, view, onViewChange }: HeaderProps
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
