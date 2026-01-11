@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,16 @@ export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave, i
     e.stopPropagation();
     onToggleLike?.(template.id);
   };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/?template=${template.id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success("Link copied to clipboard!");
+    }).catch(() => {
+      toast.error("Failed to copy link");
+    });
+  };
   return (
     <Card className="group glass-panel border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
       <CardHeader className="pb-3">
@@ -65,6 +76,15 @@ export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave, i
             )}
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleShareClick}
+              title="Copy link to share"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
             {onToggleSave && (
               <Button
                 variant="ghost"
