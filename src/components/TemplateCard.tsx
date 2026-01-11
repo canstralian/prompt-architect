@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck } from "lucide-react";
 import { PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
+import { cn } from "@/lib/utils";
 
 interface TemplateCardProps {
   template: PromptTemplate;
   onUseTemplate: (template: PromptTemplate) => void;
   isSaved?: boolean;
   onToggleSave?: (templateId: string, isSaved: boolean) => void;
+  isLiked?: boolean;
+  onToggleLike?: (templateId: string) => void;
 }
 
 const categoryIcons: Record<TemplateCategory, React.ElementType> = {
@@ -33,7 +36,7 @@ const categoryColors: Record<TemplateCategory, string> = {
   other: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
-export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave }: TemplateCardProps) {
+export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave, isLiked, onToggleLike }: TemplateCardProps) {
   const Icon = categoryIcons[template.category];
   const colorClass = categoryColors[template.category];
 
@@ -42,6 +45,10 @@ export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave }:
     onToggleSave?.(template.id, isSaved ?? false);
   };
 
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleLike?.(template.id);
+  };
   return (
     <Card className="group glass-panel border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
       <CardHeader className="pb-3">
@@ -99,10 +106,16 @@ export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave }:
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3" />
+            <button
+              onClick={handleLikeClick}
+              className={cn(
+                "flex items-center gap-1 transition-colors hover:text-red-500",
+                isLiked && "text-red-500"
+              )}
+            >
+              <Heart className={cn("w-3 h-3", isLiked && "fill-current")} />
               {template.likes_count}
-            </span>
+            </button>
             <span className="flex items-center gap-1">
               <Download className="w-3 h-3" />
               {template.saves_count}
