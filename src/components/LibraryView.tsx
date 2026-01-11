@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Search, Loader2, BookOpen, Sparkles, Bookmark } from "lucide-react";
+import { Search, Loader2, BookOpen, Sparkles, Bookmark, TrendingUp, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TemplateCard } from "@/components/TemplateCard";
 import { CreateTemplateDialog } from "@/components/CreateTemplateDialog";
 import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
+import { useLikedTemplates } from "@/hooks/useLikedTemplates";
 import { useAuth } from "@/hooks/useAuth";
 import { SECTIONS } from "@/lib/sectionData";
 
@@ -37,8 +39,15 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
     unsaveTemplate,
   } = useSavedTemplates();
 
+  const {
+    isLiked,
+    toggleLike,
+    refetch: refetchLikes,
+  } = useLikedTemplates();
+
   const [previewTemplate, setPreviewTemplate] = useState<PromptTemplate | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "saved">("all");
+  const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
 
   function handleUseTemplate(template: PromptTemplate) {
     onUseTemplate(template.sections, template.name);
@@ -52,9 +61,16 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
     }
   }
 
-  const displayedTemplates = activeTab === "saved" 
+  const filteredByTab = activeTab === "saved" 
     ? templates.filter(t => isTemplateSaved(t.id))
     : templates;
+
+  const displayedTemplates = [...filteredByTab].sort((a, b) => {
+    if (sortBy === "popular") {
+      return b.likes_count - a.likes_count;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -98,6 +114,25 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
             className="pl-10"
           />
         </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "popular" | "recent")}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="popular">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Most Popular
+              </div>
+            </SelectItem>
+            <SelectItem value="recent">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Most Recent
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Category Filters */}
@@ -170,6 +205,8 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
                 onUseTemplate={handleUseTemplate}
                 isSaved={isTemplateSaved(template.id)}
                 onToggleSave={user ? handleToggleSave : undefined}
+                isLiked={isLiked(template.id)}
+                onToggleLike={user ? toggleLike : undefined}
               />
             </div>
           ))}
