@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Loader2, Camera } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Camera, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +36,8 @@ export default function Profile() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [userTemplates, setUserTemplates] = useState<PromptTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [savedTemplates, setSavedTemplates] = useState<PromptTemplate[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -46,6 +49,7 @@ export default function Profile() {
     if (user) {
       fetchProfile();
       fetchUserTemplates();
+      fetchSavedTemplates();
     }
   }, [user]);
 
@@ -161,6 +165,58 @@ export default function Profile() {
     setLoadingTemplates(false);
   }
 
+  async function fetchSavedTemplates() {
+    if (!user) return;
+
+    setLoadingSaved(true);
+    
+    // First get the saved template IDs
+    const { data: savedData, error: savedError } = await supabase
+      .from("user_saved_templates")
+      .select("template_id")
+      .eq("user_id", user.id);
+
+    if (savedError) {
+      console.error("Error fetching saved templates:", savedError);
+      setLoadingSaved(false);
+      return;
+    }
+
+    if (!savedData || savedData.length === 0) {
+      setSavedTemplates([]);
+      setLoadingSaved(false);
+      return;
+    }
+
+    const templateIds = savedData.map((s) => s.template_id);
+    
+    // Then fetch the actual templates
+    const { data: templatesData, error: templatesError } = await supabase
+      .from("prompt_templates")
+      .select("*")
+      .in("id", templateIds);
+
+    if (templatesError) {
+      console.error("Error fetching template details:", templatesError);
+    } else {
+      const mappedTemplates: PromptTemplate[] = (templatesData || []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        category: t.category as TemplateCategory,
+        author: t.author,
+        is_curated: t.is_curated,
+        likes_count: t.likes_count,
+        saves_count: t.saves_count,
+        sections: parseSections(t.sections),
+        tags: t.tags || [],
+        created_at: t.created_at,
+      }));
+      setSavedTemplates(mappedTemplates);
+    }
+    setLoadingSaved(false);
+  }
+
   async function handleSaveProfile() {
     if (!user) return;
 
@@ -191,6 +247,22 @@ export default function Profile() {
     } else {
       toast.success("Template deleted successfully");
       setUserTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    }
+  }
+
+  async function handleUnsaveTemplate(templateId: string) {
+    const { error } = await supabase
+      .from("user_saved_templates")
+      .delete()
+      .eq("user_id", user!.id)
+      .eq("template_id", templateId);
+
+    if (error) {
+      toast.error("Failed to remove from saved");
+      console.error("Error unsaving template:", error);
+    } else {
+      toast.success("Removed from saved templates");
+      setSavedTemplates((prev) => prev.filter((t) => t.id !== templateId));
     }
   }
 
@@ -296,27 +368,63 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingTemplates ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : userTemplates.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                You haven't created any templates yet. Go to the Library to create your first template!
-              </p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {userTemplates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    onUseTemplate={() => {}}
-                    canDelete={true}
-                    onDelete={handleDeleteTemplate}
-                  />
-                ))}
-              </div>
-            )}
+            <Tabs defaultValue="created" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="created">Created ({userTemplates.length})</TabsTrigger>
+                <TabsTrigger value="saved" className="gap-2">
+                  <Bookmark className="w-4 h-4" />
+                  Saved ({savedTemplates.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="created">
+                {loadingTemplates ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : userTemplates.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    You haven't created any templates yet. Go to the Library to create your first template!
+                  </p>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {userTemplates.map((template) => (
+                      <TemplateCard
+                        key={template.id}
+                        template={template}
+                        onUseTemplate={() => {}}
+                        canDelete={true}
+                        onDelete={handleDeleteTemplate}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="saved">
+                {loadingSaved ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : savedTemplates.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    You haven't saved any templates yet. Browse the Library and bookmark templates you like!
+                  </p>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {savedTemplates.map((template) => (
+                      <TemplateCard
+                        key={template.id}
+                        template={template}
+                        onUseTemplate={() => {}}
+                        isSaved={true}
+                        onToggleSave={() => handleUnsaveTemplate(template.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </main>
