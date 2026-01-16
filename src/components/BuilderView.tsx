@@ -8,6 +8,7 @@ import { DraftManager } from "./DraftManager";
 import { QualityChecklist } from "./QualityChecklist";
 import { Preview } from "./Preview";
 import { OnboardingTip } from "./OnboardingTip";
+import { FeaturedTemplates } from "./FeaturedTemplates";
 import { Draft } from "@/lib/sectionData";
 import { isFirstVisit, markVisited } from "@/lib/storage";
 
@@ -21,6 +22,8 @@ interface BuilderViewProps {
   onLoadPreset: (presetId: string) => void;
   onDeleteDraft: (id: string) => void;
   onRenameDraft: (id: string, name: string) => void;
+  onUseTemplate?: (sections: Record<string, string>, name: string) => void;
+  onViewLibrary?: () => void;
 }
 
 export function BuilderView({
@@ -33,6 +36,8 @@ export function BuilderView({
   onLoadPreset,
   onDeleteDraft,
   onRenameDraft,
+  onUseTemplate,
+  onViewLibrary,
 }: BuilderViewProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -117,6 +122,12 @@ export function BuilderView({
           <div className="sticky top-24 space-y-6">
             <QualityChecklist sections={draft.sections} />
             <Preview sections={draft.sections} draftName={draft.name} />
+            {onUseTemplate && onViewLibrary && (
+              <FeaturedTemplates 
+                onUseTemplate={onUseTemplate} 
+                onViewAll={onViewLibrary} 
+              />
+            )}
           </div>
         </aside>
       </div>

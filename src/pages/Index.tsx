@@ -68,6 +68,8 @@ const Index = () => {
             onLoadPreset={loadPreset}
             onDeleteDraft={deleteDraft}
             onRenameDraft={renameDraft}
+            onUseTemplate={handleUseLibraryTemplate}
+            onViewLibrary={() => setView("library")}
           />
         )}
         {view === "library" && (
