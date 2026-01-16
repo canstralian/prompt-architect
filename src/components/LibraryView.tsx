@@ -14,6 +14,8 @@ import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
 import { useLikedTemplates } from "@/hooks/useLikedTemplates";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { SECTIONS } from "@/lib/sectionData";
 interface LibraryViewProps {
   onUseTemplate: (sections: Record<string, string>, name: string) => void;
@@ -53,6 +55,24 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   const [activeTab, setActiveTab] = useState<"all" | "saved">("all");
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+
+  // Fetch user's display name for delete permission check
+  useEffect(() => {
+    async function fetchDisplayName() {
+      if (!user) {
+        setUserDisplayName(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      setUserDisplayName(data?.display_name || null);
+    }
+    fetchDisplayName();
+  }, [user]);
 
   // Handle deep linking - open template from URL parameter
   useEffect(() => {
@@ -80,6 +100,25 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
     } else {
       saveTemplate(templateId);
     }
+  }
+
+  async function handleDeleteTemplate(templateId: string) {
+    const { error } = await supabase
+      .from("prompt_templates")
+      .delete()
+      .eq("id", templateId);
+
+    if (error) {
+      toast.error("Failed to delete template");
+      console.error("Error deleting template:", error);
+    } else {
+      toast.success("Template deleted successfully");
+      refetchTemplates();
+    }
+  }
+
+  function canDeleteTemplate(template: PromptTemplate): boolean {
+    return !!userDisplayName && template.author === userDisplayName;
   }
 
   const filteredByTab = activeTab === "saved" 
@@ -228,6 +267,8 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
                 onToggleSave={user ? handleToggleSave : undefined}
                 isLiked={isLiked(template.id)}
                 onToggleLike={user ? toggleLike : undefined}
+                canDelete={canDeleteTemplate(template)}
+                onDelete={handleDeleteTemplate}
               />
             </div>
           ))}
