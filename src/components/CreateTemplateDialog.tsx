@@ -120,7 +120,11 @@ export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
 
     if (error) {
       console.error("Error creating template:", error);
-      toast.error("Failed to create template");
+      if (error.message?.includes("Rate limit exceeded")) {
+        toast.error("You've reached the limit of 10 templates per hour. Please try again later.");
+      } else {
+        toast.error("Failed to create template");
+      }
       return;
     }
 
