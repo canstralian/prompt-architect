@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header, ViewType } from "@/components/Header";
 import { TemplateView } from "@/components/TemplateView";
 import { BuilderView } from "@/components/BuilderView";
@@ -10,6 +11,17 @@ import { toast } from "sonner";
 const Index = () => {
   const { theme, toggleTheme } = useTheme();
   const [view, setView] = useState<ViewType>("builder");
+  const [searchParams] = useSearchParams();
+  const [initialTemplateId, setInitialTemplateId] = useState<string | null>(null);
+  
+  // Check for template deep link on mount
+  useEffect(() => {
+    const templateId = searchParams.get("template");
+    if (templateId) {
+      setInitialTemplateId(templateId);
+      setView("library");
+    }
+  }, [searchParams]);
   
   const {
     drafts,
@@ -59,7 +71,7 @@ const Index = () => {
           />
         )}
         {view === "library" && (
-          <LibraryView onUseTemplate={handleUseLibraryTemplate} />
+          <LibraryView onUseTemplate={handleUseLibraryTemplate} initialTemplateId={initialTemplateId} />
         )}
       </main>
     </div>

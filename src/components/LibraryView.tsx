@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, Loader2, BookOpen, Sparkles, Bookmark, TrendingUp, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,15 @@ import { useSavedTemplates } from "@/hooks/useSavedTemplates";
 import { useLikedTemplates } from "@/hooks/useLikedTemplates";
 import { useAuth } from "@/hooks/useAuth";
 import { SECTIONS } from "@/lib/sectionData";
-
 interface LibraryViewProps {
   onUseTemplate: (sections: Record<string, string>, name: string) => void;
 }
 
-export function LibraryView({ onUseTemplate }: LibraryViewProps) {
+interface LibraryViewPropsWithDeepLink extends LibraryViewProps {
+  initialTemplateId?: string | null;
+}
+
+export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPropsWithDeepLink) {
   const { user } = useAuth();
   const {
     templates,
@@ -48,6 +52,23 @@ export function LibraryView({ onUseTemplate }: LibraryViewProps) {
   const [previewTemplate, setPreviewTemplate] = useState<PromptTemplate | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "saved">("all");
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle deep linking - open template from URL parameter
+  useEffect(() => {
+    const templateIdFromUrl = searchParams.get("template") || initialTemplateId;
+    if (templateIdFromUrl && templates.length > 0 && !loading) {
+      const template = templates.find(t => t.id === templateIdFromUrl);
+      if (template) {
+        setPreviewTemplate(template);
+        // Clear the URL parameter after opening
+        if (searchParams.has("template")) {
+          searchParams.delete("template");
+          setSearchParams(searchParams, { replace: true });
+        }
+      }
+    }
+  }, [templates, loading, searchParams, initialTemplateId, setSearchParams]);
 
   function handleUseTemplate(template: PromptTemplate) {
     onUseTemplate(template.sections, template.name);
