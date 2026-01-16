@@ -66,6 +66,10 @@ export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
     setSections({});
   };
 
+  const MAX_NAME = 200;
+  const MAX_DESC = 2000;
+  const MAX_TAGS = 20;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -79,6 +83,22 @@ export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
       return;
     }
 
+    if (name.trim().length > MAX_NAME) {
+      toast.error(`Name must be ${MAX_NAME} characters or less`);
+      return;
+    }
+
+    if (description.trim().length > MAX_DESC) {
+      toast.error(`Description must be ${MAX_DESC} characters or less`);
+      return;
+    }
+
+    const tagArray = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    if (tagArray.length > MAX_TAGS) {
+      toast.error(`Maximum ${MAX_TAGS} tags allowed`);
+      return;
+    }
+
     // Check that at least one section has content
     const hasContent = Object.values(sections).some((v) => v.trim());
     if (!hasContent) {
@@ -88,20 +108,12 @@ export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
 
     setSubmitting(true);
 
-    // Get display name from profile or user metadata
-    const displayName = user.user_metadata?.display_name || user.email?.split("@")[0] || "Anonymous";
-
     const { error } = await supabase.from("prompt_templates").insert({
       name: name.trim(),
       description: description.trim(),
       category,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags: tagArray,
       sections,
-      author: displayName,
-      is_curated: false,
     });
 
     setSubmitting(false);
