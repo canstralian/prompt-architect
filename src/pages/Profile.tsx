@@ -179,6 +179,21 @@ export default function Profile() {
     setSaving(false);
   }
 
+  async function handleDeleteTemplate(templateId: string) {
+    const { error } = await supabase
+      .from("prompt_templates")
+      .delete()
+      .eq("id", templateId);
+
+    if (error) {
+      toast.error("Failed to delete template");
+      console.error("Error deleting template:", error);
+    } else {
+      toast.success("Template deleted successfully");
+      setUserTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    }
+  }
+
   if (authLoading || loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -296,6 +311,8 @@ export default function Profile() {
                     key={template.id}
                     template={template}
                     onUseTemplate={() => {}}
+                    canDelete={true}
+                    onDelete={handleDeleteTemplate}
                   />
                 ))}
               </div>
