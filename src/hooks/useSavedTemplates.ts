@@ -46,6 +46,8 @@ export function useSavedTemplates() {
     if (error) {
       if (error.code === '23505') {
         toast.error('Template already saved');
+      } else if (error.message?.includes('Rate limit exceeded')) {
+        toast.error('Too many saves! Please slow down.');
       } else {
         toast.error('Failed to save template');
       }

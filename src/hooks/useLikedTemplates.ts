@@ -70,7 +70,7 @@ export function useLikedTemplates() {
 
         if (error) throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       // Revert optimistic update
       setLikedTemplateIds((prev) => {
         const next = new Set(prev);
@@ -82,7 +82,11 @@ export function useLikedTemplates() {
         return next;
       });
       console.error("Error toggling like:", error);
-      toast.error("Failed to update like");
+      if (error?.message?.includes("Rate limit exceeded")) {
+        toast.error("Too many likes! Please slow down.");
+      } else {
+        toast.error("Failed to update like");
+      }
     }
   };
 
