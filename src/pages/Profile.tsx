@@ -30,6 +30,7 @@ export default function Profile() {
   const { user, loading: authLoading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState("");
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -38,6 +39,19 @@ export default function Profile() {
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [savedTemplates, setSavedTemplates] = useState<PromptTemplate[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(true);
+
+  const MAX_DISPLAY_NAME_LENGTH = 100;
+
+  function handleDisplayNameChange(value: string) {
+    setDisplayName(value);
+    if (value.length > MAX_DISPLAY_NAME_LENGTH) {
+      setDisplayNameError(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or less`);
+    } else if (value.length > 0 && value.trim().length === 0) {
+      setDisplayNameError("Display name cannot be only whitespace");
+    } else {
+      setDisplayNameError(null);
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -220,10 +234,21 @@ export default function Profile() {
   async function handleSaveProfile() {
     if (!user) return;
 
+    // Validate before saving
+    if (displayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      toast.error(`Display name must be ${MAX_DISPLAY_NAME_LENGTH} characters or less`);
+      return;
+    }
+
+    if (displayName.length > 0 && displayName.trim().length === 0) {
+      toast.error("Display name cannot be only whitespace");
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName })
+      .update({ display_name: displayName.trim() || null })
       .eq("id", user.id);
 
     if (error) {
@@ -341,15 +366,25 @@ export default function Profile() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="displayName">Display Name</Label>
+                <span className={`text-xs ${displayName.length > MAX_DISPLAY_NAME_LENGTH ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {displayName.length}/{MAX_DISPLAY_NAME_LENGTH}
+                </span>
+              </div>
               <Input
                 id="displayName"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => handleDisplayNameChange(e.target.value)}
                 placeholder="Enter your display name"
+                className={displayNameError ? "border-destructive" : ""}
+                maxLength={MAX_DISPLAY_NAME_LENGTH + 10}
               />
+              {displayNameError && (
+                <p className="text-xs text-destructive">{displayNameError}</p>
+              )}
             </div>
-            <Button onClick={handleSaveProfile} disabled={saving}>
+            <Button onClick={handleSaveProfile} disabled={saving || !!displayNameError}>
               {saving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
