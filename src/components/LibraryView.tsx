@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TemplateCard } from "@/components/TemplateCard";
@@ -13,6 +13,7 @@ import { CreateTemplateDialog } from "@/components/CreateTemplateDialog";
 import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
 import { useLikedTemplates } from "@/hooks/useLikedTemplates";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   const {
     templates,
     loading,
+    loadingMore,
     error,
     searchQuery,
     setSearchQuery,
@@ -37,6 +39,9 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
     setSelectedCategory,
     categories,
     refetch: refetchTemplates,
+    loadMore,
+    hasMore,
+    totalCount,
   } = useTemplateLibrary();
 
   const {
@@ -130,6 +135,13 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
       return b.likes_count - a.likes_count;
     }
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Only enable infinite scroll for "all" tab
+  const { loadMoreRef } = useInfiniteScroll({
+    onLoadMore: loadMore,
+    hasMore: hasMore && activeTab === "all",
+    isLoading: loadingMore,
   });
 
   return (
@@ -253,26 +265,48 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
 
       {/* Template Grid */}
       {!loading && !error && displayedTemplates.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayedTemplates.map((template) => (
-            <div 
-              key={template.id} 
-              onClick={() => setPreviewTemplate(template)}
-              className="cursor-pointer"
-            >
-              <TemplateCard
-                template={template}
-                onUseTemplate={handleUseTemplate}
-                isSaved={isTemplateSaved(template.id)}
-                onToggleSave={user ? handleToggleSave : undefined}
-                isLiked={isLiked(template.id)}
-                onToggleLike={user ? toggleLike : undefined}
-                canDelete={canDeleteTemplate(template)}
-                onDelete={handleDeleteTemplate}
-              />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayedTemplates.map((template) => (
+              <div 
+                key={template.id} 
+                onClick={() => setPreviewTemplate(template)}
+                className="cursor-pointer"
+              >
+                <TemplateCard
+                  template={template}
+                  onUseTemplate={handleUseTemplate}
+                  isSaved={isTemplateSaved(template.id)}
+                  onToggleSave={user ? handleToggleSave : undefined}
+                  isLiked={isLiked(template.id)}
+                  onToggleLike={user ? toggleLike : undefined}
+                  canDelete={canDeleteTemplate(template)}
+                  onDelete={handleDeleteTemplate}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Infinite scroll trigger and loading indicator */}
+          {activeTab === "all" && (
+            <div ref={loadMoreRef} className="flex flex-col items-center py-8">
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Loading more templates...</span>
+                </div>
+              )}
+              {!loadingMore && hasMore && (
+                <p className="text-xs text-muted-foreground">Scroll for more</p>
+              )}
+              {!hasMore && templates.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Showing all {totalCount} templates
+                </p>
+              )}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Template Preview Dialog */}
