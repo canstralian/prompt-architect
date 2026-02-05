@@ -299,9 +299,9 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
             ))}
           </div>
 
-          {/* Infinite scroll trigger and loading indicator */}
+          {/* Infinite scroll trigger and load more button */}
           {activeTab === "all" && (
-            <div ref={loadMoreRef} className="flex flex-col items-center py-8">
+            <div ref={loadMoreRef} className="flex flex-col items-center gap-3 py-8">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -309,7 +309,16 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
                 </div>
               )}
               {!loadingMore && hasMore && (
-                <p className="text-xs text-muted-foreground">Scroll for more</p>
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={loadMore}
+                    className="gap-2"
+                  >
+                    Load More Templates
+                  </Button>
+                  <p className="text-xs text-muted-foreground">or scroll to load automatically</p>
+                </>
               )}
               {!hasMore && templates.length > 0 && (
                 <p className="text-sm text-muted-foreground">
