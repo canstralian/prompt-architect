@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TemplateCard } from "@/components/TemplateCard";
+ import { EditTemplateDialog } from "@/components/EditTemplateDialog";
 import { PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
 import { Json } from "@/integrations/supabase/types";
 
@@ -39,6 +40,7 @@ export default function Profile() {
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [savedTemplates, setSavedTemplates] = useState<PromptTemplate[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(true);
+   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
 
   const MAX_DISPLAY_NAME_LENGTH = 100;
 
@@ -290,6 +292,15 @@ export default function Profile() {
       setSavedTemplates((prev) => prev.filter((t) => t.id !== templateId));
     }
   }
+ 
+   function handleEditTemplate(template: PromptTemplate) {
+     setEditingTemplate(template);
+   }
+ 
+   function handleTemplateUpdated() {
+     fetchUserTemplates();
+     setEditingTemplate(null);
+   }
 
   if (authLoading || loadingProfile) {
     return (
@@ -430,6 +441,8 @@ export default function Profile() {
                         onUseTemplate={() => {}}
                         canDelete={true}
                         onDelete={handleDeleteTemplate}
+                         canEdit={true}
+                         onEdit={handleEditTemplate}
                       />
                     ))}
                   </div>
@@ -462,6 +475,16 @@ export default function Profile() {
             </Tabs>
           </CardContent>
         </Card>
+         
+         {/* Edit Template Dialog */}
+         {editingTemplate && (
+           <EditTemplateDialog
+             template={editingTemplate}
+             open={!!editingTemplate}
+             onOpenChange={(open) => !open && setEditingTemplate(null)}
+             onUpdated={handleTemplateUpdated}
+           />
+         )}
       </main>
     </div>
   );
