@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TemplateCard } from "@/components/TemplateCard";
 import { CreateTemplateDialog } from "@/components/CreateTemplateDialog";
+ import { EditTemplateDialog } from "@/components/EditTemplateDialog";
 import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
 import { useLikedTemplates } from "@/hooks/useLikedTemplates";
@@ -61,6 +62,7 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+   const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
 
   // Fetch user's display name for delete permission check
   useEffect(() => {
@@ -125,6 +127,14 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   function canDeleteTemplate(template: PromptTemplate): boolean {
     return !!userDisplayName && template.author === userDisplayName;
   }
+ 
+   function canEditTemplate(template: PromptTemplate): boolean {
+     return !!userDisplayName && template.author === userDisplayName;
+   }
+ 
+   function handleEditTemplate(template: PromptTemplate) {
+     setEditingTemplate(template);
+   }
 
   const filteredByTab = activeTab === "saved" 
     ? templates.filter(t => isTemplateSaved(t.id))
@@ -282,6 +292,8 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
                   onToggleLike={user ? toggleLike : undefined}
                   canDelete={canDeleteTemplate(template)}
                   onDelete={handleDeleteTemplate}
+                   canEdit={canEditTemplate(template)}
+                   onEdit={handleEditTemplate}
                 />
               </div>
             ))}
@@ -364,6 +376,19 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
           </div>
         </DialogContent>
       </Dialog>
+ 
+       {/* Edit Template Dialog */}
+       {editingTemplate && (
+         <EditTemplateDialog
+           template={editingTemplate}
+           open={!!editingTemplate}
+           onOpenChange={(open) => !open && setEditingTemplate(null)}
+           onUpdated={() => {
+             refetchTemplates();
+             setEditingTemplate(null);
+           }}
+         />
+       )}
     </div>
   );
 }
