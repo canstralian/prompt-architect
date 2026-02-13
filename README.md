@@ -1,7 +1,14 @@
+# Prompt Architect
 
+![Build](https://github.com/canstralian/prompt-architect/actions/workflows/ci.yml/badge.svg)
+[![Code Coverage](https://codecov.io/gh/canstralian/prompt-architect/branch/main/graph/badge.svg)](https://codecov.io/gh/canstralian/prompt-architect)
+![License](https://img.shields.io/github/license/canstralian/prompt-architect)
+[![Version](https://img.shields.io/github/v/release/canstralian/prompt-architect)](https://github.com/canstralian/prompt-architect/releases)
+[![Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/github/canstralian/prompt-architect)](https://snyk.io)
+[![Dependencies](https://img.shields.io/librariesio/release/npm/prompt-architect)](https://libraries.io/npm/prompt-architect)
+[![TypeScript](https://img.shields.io/badge/language-TypeScript-blue)](https://www.typescriptlang.org/)
 ---
 
-# Prompt Architect
 
 Prompt Architect is a tool designed to streamline prompt engineering workflows by providing a robust framework for designing, testing, and validating AI prompts across various systems. This tool leverages modern web technologies to deliver an intuitive interface and scalable architecture.
 
