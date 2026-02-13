@@ -1,73 +1,65 @@
-# Welcome to your Lovable project
+The existing README for the "prompt-architect" repository appears to be a default Lovable project structure, which might not fully align with enterprise or best practices. Below is a refined and best-practices-based README, tailored for clarity, professional presentation, and extensibility:
 
-## Project info
+---
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+# Prompt Architect
 
-## How can I edit this code?
+Prompt Architect is a tool designed to streamline prompt engineering workflows by providing a robust framework for designing, testing, and validating AI prompts across various systems. This tool leverages modern web technologies to deliver an intuitive interface and scalable architecture.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Prompt Specification & Validation**: Define and validate prompts using structured schemas.
+- **Registry for Prompt Management**: Organize prompts in a logical and reusable directory structure.
+- **Golden Test Harness**: Maintain reliable performance through prompt regression tests.
+- **Evaluation with Scorers**: Integrate scoring mechanisms to measure prompt effectiveness.
+- **Built-in Security Features**: Safeguard against prompt injection and validate outputs.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## System Overview
 
-Changes made via Lovable will be committed automatically to this repo.
+This repository is built with the following technologies:
 
-**Use your preferred IDE**
+- **Frontend**: React with Vite, Shadcn-UI, and Tailwind CSS for a fast and modern user interface.
+- **TypeScript**: Ensures a strongly typed, maintainable codebase.
+- **Tooling**: Includes both CLI-level utilities and CI/CD integrations.
+  
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+To get started, clone the repository and install dependencies:
 
-Follow these steps:
+```bash
+# Clone the repository
+git clone <REPO_URL>
+cd prompt-
+architect
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Ensure you have [Node.js](https://nodejs.org/) installed (preferred installation method: [nvm](https://github.com/nvm-sh/nvm)).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Local Development
 
-## What technologies are used for this project?
+- Run the app: `npm run dev`
+- Build for production: `npm run build`
 
-This project is built with:
+### Editing Prompts
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Prompts are stored in the `/prompts` directory, organized by domain and name. Use the `prompt-edit` CLI tool for consistent formatting and validation.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Contribution Guidelines
 
-## Can I connect a custom domain to my Lovable project?
+#### Pull Requests
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Feature branches should be named using the format: `feature/<ticket_number>-description`
