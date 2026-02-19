@@ -237,7 +237,7 @@ A profile is automatically created for each new user via a database trigger. Aut
 
 ### Pull Requests
 
-- Feature branches should be named using the format: `feature/<ticket_number>-description`
+- Feature branches should be named using the format: `feature/<ticket-number>-short-description-in-kebab-case`
 - Include a clear description of the changes and their motivation
 - Ensure the build passes (`npm run build`) and linting is clean (`npm run lint`)
 
