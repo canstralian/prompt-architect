@@ -98,7 +98,7 @@ Create a `.env` file in the project root with your Supabase credentials:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
 ```
 
 ### Running the Dev Server
