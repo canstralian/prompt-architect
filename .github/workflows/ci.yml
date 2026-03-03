@@ -2,8 +2,14 @@ name: ci
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+
+# Prevent duplicate runs for the same PR branch
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -12,14 +18,18 @@ jobs:
   lint:
     name: ci / lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
+
       - name: Install dependencies
         run: npm ci
+
       - name: ESLint
         run: npm run lint
 
@@ -27,14 +37,18 @@ jobs:
     name: ci / build
     needs: lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
+
       - name: Install dependencies
         run: npm ci
+
       - name: Build
         run: npm run build
 
@@ -42,14 +56,87 @@ jobs:
     name: ci / test
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
+
       - name: Install dependencies
         run: npm ci
+
       - name: Run tests
         run: npm test
 
+  # --- Prompt Architect / governance gates ---
+  contracts:
+    name: ci / contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Required governance files present
+        run: |
+          required=(
+            "memory/constitution.md"
+            "README.md"
+            "CONTRIBUTING.md"
+            "SECURITY.md"
+            "AGENTS.md"
+            ".github/copilot-instructions.md"
+            "CLAUDE.md"
+            "GEMINI.md"
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing required file: $f"
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Validate JSON schemas (if present)
+        run: |
+          # Fail closed on malformed JSON schema files
+          if ls **/*.schema.json >/dev/null 2>&1; then
+            for f in **/*.schema.json; do
+              node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"
+            done
+          fi
+          if [ -f "l1_l2/l1_l2_handoff_schema.json" ]; then
+            node -e "JSON.parse(require('fs').readFileSync('l1_l2/l1_l2_handoff_schema.json','utf8'))"
+          fi
+
+  # --- Security gates ---
+  dependency-review:
+    name: security / dependency-review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # CodeQL is optional but recommended for enterprise (esp. if GHAS is available)
+  codeql:
+    name: security / codeql
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
