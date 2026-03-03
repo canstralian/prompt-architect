@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://promptcrafting.net/schemas/prompt-scorecard/v2.1.json",
+  "title": "Purple Team Prompt Scorecard",
+  "description": "Machine-readable reliability scorecard for prompt governance. CI pipelines should reject prompts where release_gate is 'blocked' or composite_score < 22.",
+  "version": "2.1",
+  "type": "object",
+  "required": [
+    "$schema",
+    "version",
+    "generated_at",
+    "prompt_name",
+    "release_gate",
+    "composite_score",
+    "ship_threshold",
+    "dimensions",
+    "threat_vectors",
+    "defensive_elements",
+    "release_reasons"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema URI for this document."
+    },
+    "version": {
+      "type": "string",
+      "description": "Spec version that produced this scorecard.",
+      "examples": ["2.1"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of scorecard generation."
+    },
+    "prompt_name": {
+      "type": "string",
+      "description": "Human-readable name of the evaluated prompt draft."
+    },
+    "release_gate": {
+      "type": "string",
+      "enum": ["green", "warning", "blocked"],
+      "description": "Release gate decision. CI should fail on 'blocked', warn on 'warning'."
+    },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Machine-parseable flags: [BELOW_THRESHOLD], [CRITICAL_VECTOR_UNMITIGATED], [ASSUMPTION].",
+      "examples": [["[BELOW_THRESHOLD]", "[CRITICAL_VECTOR_UNMITIGATED]"]]
+    },
+    "composite_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "Sum of all 6 dimension scores (max 30)."
+    },
+    "ship_threshold": {
+      "type": "integer",
+      "const": 22,
+      "description": "Minimum composite score required to ship without warning."
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "description": "Six reliability dimensions, each scored 0–5.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "score", "max", "rationale"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "intent_clarity",
+              "injection_resistance",
+              "output_determinism",
+              "scope_containment",
+              "token_efficiency",
+              "graceful_degradation"
+            ]
+          },
+          "name": { "type": "string" },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Dimension score. Must be ≥ 3 to pass minimum gate."
+          },
+          "max": {
+            "type": "integer",
+            "const": 5
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Human-readable explanation of the score."
+          }
+        }
+      }
+    },
+    "threat_vectors": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "description": "A–G threat vector risk register.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "severity", "likelihood", "mitigation"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": ["A", "B", "C", "D", "E", "F", "G"],
+            "description": "Vector identifier per threat taxonomy."
+          },
+          "name": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["Low", "Medium", "High", "Critical"],
+            "description": "Impact severity if the vector is exploited."
+          },
+          "likelihood": {
+            "type": "string",
+            "enum": ["Low", "Medium", "High"],
+            "description": "Probability of the vector being triggered."
+          },
+          "mitigation": {
+            "type": "string",
+            "enum": ["Unmitigated", "Partial", "Mitigated"],
+            "description": "Current mitigation status. 'Critical + Unmitigated' blocks release."
+          }
+        }
+      }
+    },
+    "defensive_elements": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "description": "Seven mandatory defensive architecture layers.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "present"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "authority_hierarchy",
+              "trust_boundary",
+              "refusal_conditions",
+              "assumption_declaration",
+              "graceful_degradation",
+              "output_contract",
+              "token_budget"
+            ]
+          },
+          "name": { "type": "string" },
+          "present": {
+            "type": "boolean",
+            "description": "Whether this defensive layer was detected in the prompt."
+          }
+        }
+      }
+    },
+    "release_reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable explanation of the release gate decision."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "$schema": "https://promptcrafting.net/schemas/prompt-scorecard/v2.1.json",
+      "version": "2.1",
+      "generated_at": "2026-03-01T12:00:00Z",
+      "prompt_name": "Security Automation Agent",
+      "release_gate": "green",
+      "flags": [],
+      "composite_score": 25,
+      "ship_threshold": 22,
+      "dimensions": [
+        { "id": "intent_clarity",       "name": "Intent Clarity",       "score": 5, "max": 5, "rationale": "Well-defined with measurable goals." },
+        { "id": "injection_resistance", "name": "Injection Resistance", "score": 4, "max": 5, "rationale": "Strong denial rules present." },
+        { "id": "output_determinism",   "name": "Output Determinism",   "score": 5, "max": 5, "rationale": "JSON schema with required fields." },
+        { "id": "scope_containment",    "name": "Scope Containment",    "score": 4, "max": 5, "rationale": "Explicit limits and invocation rules." },
+        { "id": "token_efficiency",     "name": "Token Efficiency",     "score": 4, "max": 5, "rationale": "Concise, structured sections." },
+        { "id": "graceful_degradation", "name": "Graceful Degradation", "score": 3, "max": 5, "rationale": "Fallback path defined but sparse." }
+      ],
+      "threat_vectors": [
+        { "id": "A", "name": "Scope Creep",            "severity": "High",     "likelihood": "Low",    "mitigation": "Mitigated"   },
+        { "id": "B", "name": "Instruction Collision",  "severity": "Medium",   "likelihood": "Low",    "mitigation": "Mitigated"   },
+        { "id": "C", "name": "Persona Bleed",          "severity": "Medium",   "likelihood": "Low",    "mitigation": "Mitigated"   },
+        { "id": "D", "name": "Output Schema Violation","severity": "High",     "likelihood": "Low",    "mitigation": "Mitigated"   },
+        { "id": "E", "name": "Goal Hijacking",         "severity": "High",     "likelihood": "Low",    "mitigation": "Mitigated"   },
+        { "id": "F", "name": "Data Exfiltration",      "severity": "Critical", "likelihood": "Medium", "mitigation": "Mitigated"   },
+        { "id": "G", "name": "CoT Poisoning",          "severity": "High",     "likelihood": "Low",    "mitigation": "Mitigated"   }
+      ],
+      "defensive_elements": [
+        { "id": "authority_hierarchy",    "name": "Authority Hierarchy Declaration", "present": true  },
+        { "id": "trust_boundary",         "name": "Trust Boundary Definition",       "present": true  },
+        { "id": "refusal_conditions",     "name": "Refusal Conditions",              "present": true  },
+        { "id": "assumption_declaration", "name": "Assumption Declaration Rules",    "present": true  },
+        { "id": "graceful_degradation",   "name": "Graceful Degradation Path",       "present": true  },
+        { "id": "output_contract",        "name": "Output Contract Enforcement",     "present": true  },
+        { "id": "token_budget",           "name": "Token Budget Awareness",          "present": true  }
+      ],
+      "release_reasons": ["All gates passed. Composite ≥ 22, no critical vectors, all dimensions ≥ 3."]
+    }
+  ]
+}
