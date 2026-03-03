@@ -1,0 +1,11 @@
+# Default owners for the repo
+* @YOUR_ORG/security @YOUR_ORG/platform
+
+# High-risk governance + contracts
+/memory/constitution.md @YOUR_ORG/security
+/specs/** @YOUR_ORG/platform
+/l1_l2/** @YOUR_ORG/security @YOUR_ORG/platform
+
+# CI and security policy
+/.github/workflows/** @YOUR_ORG/platform @YOUR_ORG/security
+/SECURITY.md @YOUR_ORG/security
