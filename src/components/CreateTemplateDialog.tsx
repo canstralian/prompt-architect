@@ -39,11 +39,21 @@ const CATEGORIES: { value: TemplateCategoryEnum; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-interface CreateTemplateDialogProps {
-  onCreated: () => void;
+export interface DuplicateTemplateData {
+  name: string;
+  description: string;
+  category: TemplateCategoryEnum;
+  tags: string[];
+  sections: Record<string, string>;
 }
 
-export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
+interface CreateTemplateDialogProps {
+  onCreated: () => void;
+  duplicateData?: DuplicateTemplateData | null;
+  onDuplicateHandled?: () => void;
+}
+
+export function CreateTemplateDialog({ onCreated, duplicateData, onDuplicateHandled }: CreateTemplateDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +63,19 @@ export function CreateTemplateDialog({ onCreated }: CreateTemplateDialogProps) {
   const [category, setCategory] = useState<TemplateCategoryEnum>("other");
   const [tags, setTags] = useState("");
   const [sections, setSections] = useState<Record<string, string>>({});
+
+  // Handle duplicate data - open dialog pre-filled
+  useState(() => {
+    if (duplicateData) {
+      setName(`${duplicateData.name} (Copy)`);
+      setDescription(duplicateData.description);
+      setCategory(duplicateData.category);
+      setTags(duplicateData.tags.join(", "));
+      setSections({ ...duplicateData.sections });
+      setOpen(true);
+      onDuplicateHandled?.();
+    }
+  });
 
   const handleSectionChange = (sectionId: string, value: string) => {
     setSections((prev) => ({ ...prev, [sectionId]: value }));
