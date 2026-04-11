@@ -116,6 +116,17 @@ const categoryColors: Record<TemplateCategory, string> = {
             >
               <Share2 className="w-4 h-4" />
             </Button>
+            {onDuplicate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleDuplicateClick}
+                title="Duplicate template"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
              {canEdit && onEdit && (
                <Button
                  variant="ghost"
