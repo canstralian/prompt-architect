@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Loader2, BookOpen, Sparkles, Bookmark, TrendingUp, Clock } from "lucide-react";
+import { Search, Loader2, BookOpen, Sparkles, Bookmark, TrendingUp, Clock, MousePointerClick, ArrowDownCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,9 @@ import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
 import { useLikedTemplates } from "@/hooks/useLikedTemplates";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { usePaginationPreference } from "@/hooks/usePaginationPreference";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -63,6 +66,7 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
    const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
+   const { mode: paginationMode, setMode: setPaginationMode } = usePaginationPreference();
 
   // Fetch user's display name for delete permission check
   useEffect(() => {
@@ -147,10 +151,10 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Only enable infinite scroll for "all" tab
+  // Only enable infinite scroll for "all" tab when in infinite mode
   const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: loadMore,
-    hasMore: hasMore && activeTab === "all",
+    onLoadMore: paginationMode === "infinite" ? loadMore : () => {},
+    hasMore: paginationMode === "infinite" && hasMore && activeTab === "all",
     isLoading: loadingMore,
   });
 
@@ -215,6 +219,29 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
             </SelectItem>
           </SelectContent>
         </Select>
+        <ToggleGroup
+          type="single"
+          value={paginationMode}
+          onValueChange={(v) => v && setPaginationMode(v as "infinite" | "manual")}
+          className="hidden sm:flex"
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem value="infinite" aria-label="Infinite scroll" size="sm">
+                <ArrowDownCircle className="w-4 h-4" />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent>Auto-load on scroll</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem value="manual" aria-label="Manual load more" size="sm">
+                <MousePointerClick className="w-4 h-4" />
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            <TooltipContent>Click to load more</TooltipContent>
+          </Tooltip>
+        </ToggleGroup>
       </div>
 
       {/* Category Filters */}
@@ -299,9 +326,9 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
             ))}
           </div>
 
-          {/* Infinite scroll trigger and load more button */}
+          {/* Pagination controls */}
           {activeTab === "all" && (
-            <div ref={loadMoreRef} className="flex flex-col items-center gap-3 py-8">
+            <div ref={paginationMode === "infinite" ? loadMoreRef : undefined} className="flex flex-col items-center gap-3 py-8">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -309,16 +336,13 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
                 </div>
               )}
               {!loadingMore && hasMore && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    onClick={loadMore}
-                    className="gap-2"
-                  >
-                    Load More Templates
-                  </Button>
-                  <p className="text-xs text-muted-foreground">or scroll to load automatically</p>
-                </>
+                <Button 
+                  variant="outline" 
+                  onClick={loadMore}
+                  className="gap-2"
+                >
+                  Load More Templates
+                </Button>
               )}
               {!hasMore && templates.length > 0 && (
                 <p className="text-sm text-muted-foreground">
