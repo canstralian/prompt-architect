@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ export function CreateTemplateDialog({ onCreated, duplicateData, onDuplicateHand
   const [sections, setSections] = useState<Record<string, string>>({});
 
   // Handle duplicate data - open dialog pre-filled
-  useState(() => {
+  useEffect(() => {
     if (duplicateData) {
       setName(`${duplicateData.name} (Copy)`);
       setDescription(duplicateData.description);
@@ -75,7 +75,7 @@ export function CreateTemplateDialog({ onCreated, duplicateData, onDuplicateHand
       setOpen(true);
       onDuplicateHandled?.();
     }
-  });
+  }, [duplicateData]);
 
   const handleSectionChange = (sectionId: string, value: string) => {
     setSections((prev) => ({ ...prev, [sectionId]: value }));
