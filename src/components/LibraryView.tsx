@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TemplateCard } from "@/components/TemplateCard";
-import { CreateTemplateDialog } from "@/components/CreateTemplateDialog";
+import { CreateTemplateDialog, DuplicateTemplateData } from "@/components/CreateTemplateDialog";
  import { EditTemplateDialog } from "@/components/EditTemplateDialog";
 import { useTemplateLibrary, PromptTemplate } from "@/hooks/useTemplateLibrary";
 import { useSavedTemplates } from "@/hooks/useSavedTemplates";
@@ -66,6 +66,7 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
   const [searchParams, setSearchParams] = useSearchParams();
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
    const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
+   const [duplicateData, setDuplicateData] = useState<DuplicateTemplateData | null>(null);
    const { mode: paginationMode, setMode: setPaginationMode } = usePaginationPreference();
 
   // Fetch user's display name for delete permission check
@@ -140,6 +141,16 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
      setEditingTemplate(template);
    }
 
+  function handleDuplicateTemplate(template: PromptTemplate) {
+    setDuplicateData({
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      tags: template.tags,
+      sections: template.sections,
+    });
+  }
+
   const filteredByTab = activeTab === "saved" 
     ? templates.filter(t => isTemplateSaved(t.id))
     : templates;
@@ -173,7 +184,11 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
             </p>
           </div>
         </div>
-        <CreateTemplateDialog onCreated={refetchTemplates} />
+        <CreateTemplateDialog
+          onCreated={refetchTemplates}
+          duplicateData={duplicateData}
+          onDuplicateHandled={() => setDuplicateData(null)}
+        />
       </div>
 
       {/* Tabs for All / Saved */}
@@ -321,6 +336,7 @@ export function LibraryView({ onUseTemplate, initialTemplateId }: LibraryViewPro
                   onDelete={handleDeleteTemplate}
                    canEdit={canEditTemplate(template)}
                    onEdit={handleEditTemplate}
+                   onDuplicate={user ? handleDuplicateTemplate : undefined}
                 />
               </div>
             ))}

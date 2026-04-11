@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
- import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck, Share2, Trash2, Pencil } from "lucide-react";
+ import { Heart, Download, Sparkles, Code, Search, PenTool, Zap, BarChart, Calendar, Palette, Bookmark, BookmarkCheck, Share2, Trash2, Pencil, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { PromptTemplate, TemplateCategory } from "@/hooks/useTemplateLibrary";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,9 @@ interface TemplateCardProps {
   onToggleLike?: (templateId: string) => void;
   canDelete?: boolean;
   onDelete?: (templateId: string) => void;
- canEdit?: boolean;
- onEdit?: (template: PromptTemplate) => void;
+  canEdit?: boolean;
+  onEdit?: (template: PromptTemplate) => void;
+  onDuplicate?: (template: PromptTemplate) => void;
 }
 
 const categoryIcons: Record<TemplateCategory, React.ElementType> = {
@@ -52,7 +53,7 @@ const categoryColors: Record<TemplateCategory, string> = {
   other: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
- export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave, isLiked, onToggleLike, canDelete, onDelete, canEdit, onEdit }: TemplateCardProps) {
+ export function TemplateCard({ template, onUseTemplate, isSaved, onToggleSave, isLiked, onToggleLike, canDelete, onDelete, canEdit, onEdit, onDuplicate }: TemplateCardProps) {
   const Icon = categoryIcons[template.category];
   const colorClass = categoryColors[template.category];
 
@@ -80,10 +81,15 @@ const categoryColors: Record<TemplateCategory, string> = {
     e.stopPropagation();
   };
  
-   const handleEditClick = (e: React.MouseEvent) => {
-     e.stopPropagation();
-     onEdit?.(template);
-   };
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit?.(template);
+  };
+
+  const handleDuplicateClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDuplicate?.(template);
+  };
 
   return (
     <Card className="group glass-panel border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
@@ -110,6 +116,17 @@ const categoryColors: Record<TemplateCategory, string> = {
             >
               <Share2 className="w-4 h-4" />
             </Button>
+            {onDuplicate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleDuplicateClick}
+                title="Duplicate template"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
              {canEdit && onEdit && (
                <Button
                  variant="ghost"
