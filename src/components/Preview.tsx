@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Copy, Download, Check, Eye } from "lucide-react";
+import { Copy, Download, Check, Eye, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SECTIONS } from "@/lib/sectionData";
+import { analyzePurpleTeam, exportScorecardJson } from "@/lib/purpleTeam";
 import { toast } from "sonner";
 
 interface PreviewProps {
@@ -47,6 +48,24 @@ export function Preview({ sections, draftName }: PreviewProps) {
     toast.success("Downloaded as Markdown!");
   };
 
+  const handleExportScorecard = () => {
+    const report = analyzePurpleTeam(sections);
+    const scorecard = exportScorecardJson(report, draftName);
+    const blob = new Blob([JSON.stringify(scorecard, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${draftName.toLowerCase().replace(/\s+/g, "-")}.scorecard.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const gateLabel = { green: "Greenlight", warning: "Warning", blocked: "Blocked" }[report.releaseGate];
+    toast.success(`Scorecard exported — Gate: ${gateLabel} (${scorecard.composite_score}/30)`);
+  };
+
   return (
     <div className="bg-card border rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b bg-secondary/30">
@@ -78,6 +97,17 @@ export function Preview({ sections, draftName }: PreviewProps) {
           >
             <Download className="w-4 h-4" />
             Download .md
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportScorecard}
+            disabled={isEmpty}
+            className="gap-2"
+            title="Export Purple Team Reliability Scorecard as JSON (CI/CD compatible)"
+          >
+            <FileJson className="w-4 h-4" />
+            Scorecard
           </Button>
         </div>
       </div>

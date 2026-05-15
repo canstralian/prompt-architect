@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Edit3 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Edit3, ShieldCheck, CheckSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SECTIONS } from "@/lib/sectionData";
 import { SectionEditor } from "./SectionEditor";
@@ -9,6 +9,10 @@ import { QualityChecklist } from "./QualityChecklist";
 import { Preview } from "./Preview";
 import { OnboardingTip } from "./OnboardingTip";
 import { FeaturedTemplates } from "./FeaturedTemplates";
+import { ThreatMatrix } from "./ThreatMatrix";
+import { ReliabilityScorecard } from "./ReliabilityScorecard";
+import { DefensiveArchitecturePanel } from "./DefensiveArchitecturePanel";
+import { analyzePurpleTeam } from "@/lib/purpleTeam";
 import { Draft } from "@/lib/sectionData";
 import { isFirstVisit, markVisited } from "@/lib/storage";
 
@@ -41,12 +45,18 @@ export function BuilderView({
 }: BuilderViewProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<"quality" | "purple">("quality");
 
   useEffect(() => {
     if (isFirstVisit()) {
       setShowOnboarding(true);
     }
   }, []);
+
+  const purpleReport = useMemo(
+    () => analyzePurpleTeam(draft.sections),
+    [draft.sections]
+  );
 
   const dismissOnboarding = () => {
     setShowOnboarding(false);
@@ -117,15 +127,53 @@ export function BuilderView({
           </div>
         </div>
 
-        {/* Sidebar with preview and checklist */}
+        {/* Sidebar with preview and analysis panels */}
         <aside className="space-y-6">
           <div className="sticky top-24 space-y-6">
-            <QualityChecklist sections={draft.sections} />
+            {/* Tab switcher */}
+            <div className="flex items-center bg-secondary rounded-lg p-1 gap-1">
+              <button
+                onClick={() => setSidebarTab("quality")}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-2 rounded-md transition-all ${
+                  sidebarTab === "quality"
+                    ? "bg-background shadow text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                Quality Gates
+              </button>
+              <button
+                onClick={() => setSidebarTab("purple")}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-2 rounded-md transition-all ${
+                  sidebarTab === "purple"
+                    ? "bg-background shadow text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Purple Team
+              </button>
+            </div>
+
+            {sidebarTab === "quality" ? (
+              <QualityChecklist sections={draft.sections} />
+            ) : (
+              <div className="space-y-4">
+                <ReliabilityScorecard
+                  scorecard={purpleReport.scorecard}
+                  releaseGate={purpleReport.releaseGate}
+                />
+                <ThreatMatrix vectors={purpleReport.threatVectors} />
+                <DefensiveArchitecturePanel elements={purpleReport.defensiveElements} />
+              </div>
+            )}
+
             <Preview sections={draft.sections} draftName={draft.name} />
             {onUseTemplate && onViewLibrary && (
-              <FeaturedTemplates 
-                onUseTemplate={onUseTemplate} 
-                onViewAll={onViewLibrary} 
+              <FeaturedTemplates
+                onUseTemplate={onUseTemplate}
+                onViewAll={onViewLibrary}
               />
             )}
           </div>
